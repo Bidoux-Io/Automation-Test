@@ -58,6 +58,21 @@ $env:PERCEPT_BASE_URL = "https://qa.east-us.perceptcloud.net"
 
 ## Run the test
 
+### Launch without commands
+
+Do not use the Python play button on `login.spec.ts`. This is a Playwright test, not a Python file.
+
+For the simplest launch, double-click `Open-Test-UI.cmd` in the project folder. To put it on your desktop, right-click the file, choose `Show more options`, then choose `Send to > Desktop (create shortcut)`.
+
+To open the visual test runner in VS Code:
+
+1. Press `Ctrl+Shift+P`.
+2. Select `Tasks: Run Task`.
+3. Select `Open Playwright Test UI`.
+4. In the Playwright window, select the test and click the run button.
+
+The task loads the local `.env` file automatically, so you do not need to type the email or password.
+
 Run the test in headed mode:
 
 ```powershell

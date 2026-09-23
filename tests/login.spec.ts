@@ -27,3 +27,4 @@ test('user can log in and see the Devices page', async ({ page }) => {
   // Verify that the application URL identifies the Devices area after organization selection.
   await expect(page).toHaveURL(/\/devices/);
 });
+
