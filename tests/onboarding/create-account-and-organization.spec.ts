@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import { MailTmInbox } from '../../pages/mailtm.inbox';
 import { OrganizationPage } from '../../pages/organization.page';
 import { RegistrationPage } from '../../pages/registration.page';
@@ -7,9 +7,7 @@ const registrationPassword = process.env.PERCEPT_REGISTRATION_PASSWORD ?? 'Cloud
 
 test.setTimeout(240_000);
 
-test('new user can create an organization', async ({ page }) => {
-  const runId = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-  const organizationName = `Automation Org ${runId}`;
+async function registerVerifiedAccount(page: Page): Promise<{ email: string; cloudPage: Page }> {
   let email = '';
 
   const inbox = new MailTmInbox(page);
@@ -27,14 +25,45 @@ test('new user can create an organization', async ({ page }) => {
     return await inbox.confirmAccount();
   });
 
-  await test.step('Fill organization details and submit', async () => {
-    const organizationPage = new OrganizationPage(cloudPage);
-    await organizationPage.create(organizationName, email, Math.floor(Math.random() * 3));
-    await expect(cloudPage.getByText('Review your information before submitting')).toBeVisible();
-    await expect(cloudPage.getByText(organizationName, { exact: true })).toBeVisible();
-    await expect(cloudPage.getByText(email, { exact: true })).toBeVisible();
-    await cloudPage.getByRole('button', { name: 'Submit', exact: true }).click();
-    await expect(cloudPage).toHaveURL(/\/devices/, { timeout: 60_000 });
-    await expect(cloudPage.getByRole('navigation').getByRole('link', { name: organizationName })).toBeVisible();
+  return { email, cloudPage };
+}
+
+test.describe('onboarding smoke flow', () => {
+  test.describe.configure({ mode: 'serial' });
+
+  let context: BrowserContext;
+  let page: Page;
+  let cloudPage: Page;
+  let email: string;
+
+  test.beforeAll(async ({ browser, baseURL }) => {
+    context = await browser.newContext({ baseURL });
+    page = await context.newPage();
+  });
+
+  test.afterAll(async () => {
+    await context?.close();
+  });
+
+  test('new user can create and verify an account', async () => {
+    ({ email, cloudPage } = await registerVerifiedAccount(page));
+    await expect(cloudPage.getByRole('heading', { name: 'Organization Picker' })).toBeVisible();
+    await expect(cloudPage.getByText('No Organizations')).toBeVisible();
+  });
+
+  test('verified user can create an organization', async () => {
+    const runId = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const organizationName = `Automation Org ${runId}`;
+
+    await test.step('Fill organization details and submit', async () => {
+      const organizationPage = new OrganizationPage(cloudPage);
+      await organizationPage.create(organizationName, email, Math.floor(Math.random() * 3));
+      await expect(cloudPage.getByText('Review your information before submitting')).toBeVisible();
+      await expect(cloudPage.getByText(organizationName, { exact: true })).toBeVisible();
+      await expect(cloudPage.getByText(email, { exact: true })).toBeVisible();
+      await cloudPage.getByRole('button', { name: 'Submit', exact: true }).click();
+      await expect(cloudPage).toHaveURL(/\/devices/, { timeout: 60_000 });
+      await expect(cloudPage.getByRole('navigation').getByRole('link', { name: organizationName })).toBeVisible();
+    });
   });
 });

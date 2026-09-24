@@ -56,9 +56,14 @@ The QA URL is already configured. To use another environment for one terminal se
 $env:PERCEPT_BASE_URL = "https://qa.east-us.perceptcloud.net"
 ```
 
-## Account creation test
+## Onboarding smoke flow
 
-The onboarding test creates a temporary mailbox through the public mail.tm API, registers a new account, verifies the email, submits the organization, and verifies its Devices screen. Each run creates a real organization in QA. No mailbox account or API key is required. The QA environment must allow registration with the public domain returned by mail.tm; this external service may be unavailable or blocked by QA. Run only the onboarding test with:
+The onboarding spec reports two separate, ordered tests:
+
+1. Create a temporary mailbox through the public mail.tm API, register a new account, verify its email, and reach the empty Organization Picker.
+2. Use that verified account to submit a new organization and verify its Devices screen.
+
+Run the entire spec together: the second test depends on the browser session created by the first. If account creation fails, organization creation is skipped. Each run creates one real account and one real organization in QA. No mailbox account or API key is required, but QA must accept the public domain returned by mail.tm; the external service may also be unavailable or rate-limited. Run the onboarding flow with:
 
 ```powershell
 npx playwright test tests/onboarding/create-account-and-organization.spec.ts
