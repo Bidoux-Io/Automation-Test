@@ -43,15 +43,15 @@ export class LoginPage {
 
   // The login method receives three strings: email, password, and organization name.
   // These are inputs for this page object; they are not dictionary keys or Node types.
-  async login(email: string, password: string, organizationName: string): Promise<void> {
-    // Fill the email field before moving to the password screen.
+  async authenticate(email: string, password: string): Promise<void> {
     await this.enterEmail(email);
-    // Click Next so the application displays the Keycloak password screen.
     await this.continueToPassword();
-    // Fill the password field on the Keycloak screen.
     await this.enterPassword(password);
-    // Submit the credentials and wait for the next application screen.
     await this.signIn();
+  }
+
+  async login(email: string, password: string, organizationName: string): Promise<void> {
+    await this.authenticate(email, password);
     // Select AutomatedOrg so the test enters the intended Percept Cloud organization.
     await this.selectOrganization(organizationName);
   }
