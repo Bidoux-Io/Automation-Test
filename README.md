@@ -4,7 +4,7 @@ This project contains Playwright smoke tests for the Percept Cloud QA environmen
 
 ## What the test does
 
-The onboarding flow verifies a new account, creates an organization, checks that its Devices page opens, and invites an administrator.
+The onboarding flow verifies a new account, creates an organization, checks that its Devices page opens, then invites and removes an administrator.
 
 ## Project structure
 
@@ -15,11 +15,8 @@ Automation Test/
 │   ├── registration.page.ts
 │   └── organization.page.ts
 ├── tests/
-│   ├── auth.setup.ts
-│   ├── onboarding/
-│   │   └── create-account-and-organization.spec.ts
-│   └── users/
-│       └── users.spec.ts
+│   └── onboarding/
+│       └── create-account-and-organization.spec.ts
 ├── .gitignore
 ├── package.json
 ├── playwright.config.ts
@@ -28,8 +25,6 @@ Automation Test/
 ```
 
 - `tests/onboarding/create-account-and-organization.spec.ts` contains the three ordered smoke tests.
-- `tests/auth.setup.ts` signs in to an existing organization for independent feature tests.
-- `tests/users/users.spec.ts` opens the Users page without creating an account or organization.
 - `pages/` contains the mailbox, registration, and organization actions.
 - `playwright.config.ts` contains browser, URL, reporting, and headed-mode settings.
 - `package.json` lists dependencies and commands.
@@ -61,41 +56,19 @@ The QA URL is already configured. To use another environment for one terminal se
 $env:PERCEPT_BASE_URL = "https://qa.east-us.perceptcloud.net"
 ```
 
-For tests against an existing organization, set these values in your local `.env` file (which is git-ignored):
-
-```dotenv
-PERCEPT_USERNAME=your-existing-qa-account-email
-PERCEPT_PASSWORD=your-existing-qa-account-password
-```
-
-The username and password are already configured locally. The setup selects `AutomatedOrg` by default; set `PERCEPT_ORGANIZATION_NAME=your-existing-organization-name` to use another organization. It signs in once per run and saves the session to the ignored `playwright/.auth/` directory. It does not create an account or organization. If the session expires, run the test again to refresh it.
-
 ## Onboarding smoke flow
 
 The onboarding spec reports three separate, ordered tests:
 
 1. Create a temporary mailbox through the public mail.tm API, register a new account, verify its email, and reach the empty Organization Picker.
 2. Use that verified account to submit a new organization and verify its Devices screen.
-3. Open Settings > Users, verify `nathan.robidoux@ionodes.com`, invite that user as an Administrator, and close the confirmation.
+3. Open Settings > Users, invite `yukemmodiprou-5959@yopmail.com` as an Administrator, then remove that user and confirm the Users list no longer contains them.
 
-Run the entire spec together: the later tests depend on the browser session created by the first. If account creation fails, the later tests are skipped. Each run creates one real account and one real organization in QA and sends an invitation to the specified user. No mailbox account or API key is required, but QA must accept the public domain returned by mail.tm; the external service may also be unavailable or rate-limited. Run the onboarding flow with:
+Run the entire spec together: the later tests depend on the browser session created by the first. If account creation fails, the later tests are skipped. Each run creates one real account and one real organization in QA, then invites and removes the specified user. No mailbox account or API key is required, but QA must accept the public domain returned by mail.tm; the external service may also be unavailable or rate-limited. Run the onboarding flow with:
 
 ```powershell
 npm run test:onboarding
 ```
-
-## Independent feature tests
-
-Put new feature specs outside `tests/onboarding/` (for example, under `tests/users/`). They run in the `authenticated` project, which automatically signs in before running the selected tests. Each test gets its own browser context with the saved login state; navigate to the existing organization from the picker as `users.spec.ts` does. Tests should not depend on the page left open by another test.
-
-Run a single feature test by file or name without running onboarding:
-
-```powershell
-npm test -- tests/users/users.spec.ts
-npx playwright test --project=authenticated -g "can open users"
-```
-
-`npm test` defaults to authenticated tests. `npm run test:ui` (and the desktop/VS Code launcher) shows all projects so you can choose an individual test; selecting the Users test runs its login setup but not onboarding. In the UI, set the Projects filter to `all` if only `setup` is shown. The top-level Run All action also runs onboarding and creates a new account and organization, so use individual test run buttons for routine work. Repeated invitation tests should use controlled recipients or cleanup rather than repeatedly emailing a real user.
 
 ## Run the test
 
@@ -114,13 +87,13 @@ To open the visual test runner in VS Code:
 
 The task loads the local `.env` file automatically.
 
-Run authenticated tests in headed mode:
+Run the onboarding tests in headed mode:
 
 ```powershell
 npm test
 ```
 
-The browser remains visible because `headless: false` is configured in `playwright.config.ts`. Run `npm run test:onboarding` when you specifically want to create and verify a new account and organization.
+The browser remains visible because `headless: false` is configured in `playwright.config.ts`. Both `npm test` and `npm run test:onboarding` create a new account and organization in QA.
 
 Run with Playwright's interactive debugger:
 

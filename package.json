@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "playwright test --project=authenticated",
+    "test": "playwright test --project=onboarding",
     "test:ui": "playwright test --ui",
-    "test:headed": "playwright test --headed --project=authenticated",
-    "test:debug": "playwright test --debug --project=authenticated",
+    "test:headed": "playwright test --headed --project=onboarding",
+    "test:debug": "playwright test --debug --project=onboarding",
     "test:onboarding": "playwright test --project=onboarding",
     "test:ui:onboarding": "playwright test --ui --project=onboarding",
     "report": "playwright show-report"
