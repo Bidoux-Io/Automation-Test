@@ -12,6 +12,16 @@
 			"isBackground": true,
 			"problemMatcher": [],
 			"group": "test"
+		},
+		{
+			"label": "Run Onboarding Tests and Open Report",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"test"
+			],
+			"problemMatcher": [],
+			"group": "test"
 		}
 	]
 }

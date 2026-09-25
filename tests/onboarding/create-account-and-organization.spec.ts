@@ -47,20 +47,25 @@ test.describe('onboarding smoke flow', () => {
 
   test('new user can create and verify an account', async () => {
     ({ email, cloudPage } = await registerVerifiedAccount(page));
-    await expect(cloudPage.getByRole('heading', { name: 'Organization Picker' })).toBeVisible();
-    await expect(cloudPage.getByText('No Organizations')).toBeVisible();
+    await test.step('Confirm the verified account has no organizations', async () => {
+      await expect(cloudPage.getByRole('heading', { name: 'Organization Picker' })).toBeVisible();
+      await expect(cloudPage.getByText('No Organizations')).toBeVisible();
+    });
   });
 
   test('verified user can create an organization', async () => {
     const runId = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const organizationName = `Automation Org ${runId}`;
 
-    await test.step('Fill organization details and submit', async () => {
+    await test.step('Fill and review organization details', async () => {
       const organizationPage = new OrganizationPage(cloudPage);
       await organizationPage.create(organizationName, email, Math.floor(Math.random() * 3));
       await expect(cloudPage.getByText('Review your information before submitting')).toBeVisible({ timeout: 30_000 });
       await expect(cloudPage.getByText(organizationName, { exact: true })).toBeVisible();
       await expect(cloudPage.getByText(email, { exact: true })).toBeVisible();
+    });
+
+    await test.step('Submit organization and open Devices', async () => {
       await cloudPage.getByRole('button', { name: 'Submit', exact: true }).click();
       await expect(cloudPage).toHaveURL(/\/devices/, { timeout: 60_000 });
       await expect(cloudPage.getByRole('navigation').getByRole('link', { name: organizationName })).toBeVisible();

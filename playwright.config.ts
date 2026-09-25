@@ -10,8 +10,9 @@ export default defineConfig({
   use: {
     baseURL: process.env.PERCEPT_BASE_URL ?? 'https://qa.east-us.perceptcloud.net',
     headless: false,
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
     ...devices['Desktop Chrome'],
   },
-  reporter: [['html', { open: 'never' }]],
+  reporter: process.argv.includes('--list') ? 'list' : [['html', { open: 'always' }]],
 });

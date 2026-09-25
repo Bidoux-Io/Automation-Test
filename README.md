@@ -82,8 +82,7 @@ To open the visual test runner in VS Code:
 
 1. Press `Ctrl+Shift+P`.
 2. Select `Tasks: Run Task`.
-3. Select `Open Playwright Test UI`.
-4. In the Playwright window, select the test and click the run button.
+3. Select `Run Onboarding Tests and Open Report` to run the full flow and open the HTML report, or `Open Playwright Test UI` to run individual tests in Playwright's own results view.
 
 The task loads the local `.env` file automatically.
 
@@ -93,7 +92,8 @@ Run the onboarding tests in headed mode:
 npm test
 ```
 
-The browser remains visible because `headless: false` is configured in `playwright.config.ts`. Both `npm test` and `npm run test:onboarding` create a new account and organization in QA.
+The browser remains visible because `headless: false` is configured in `playwright.config.ts`. Both `npm test` and `npm run test:onboarding` create a new account and organization in QA. CLI runs open the HTML report at the end; click a test to see its named steps and Playwright actions. Failures include a screenshot and trace. UI mode displays results in its own window instead of opening a separate HTML report.
+`npm test -- --list` only lists discovered tests; it does not run them or update the HTML report. If the report shows only skipped tests, run `npm test` without `--list`.
 
 Run with Playwright's interactive debugger:
 
@@ -101,13 +101,13 @@ Run with Playwright's interactive debugger:
 npm run test:debug
 ```
 
-Open the HTML report after a run:
+Reopen the last HTML report:
 
 ```powershell
 npm run report
 ```
 
-The report does not open automatically after a failed CLI run, so the command exits promptly.
+The CLI report opens automatically after passed or failed runs. Close the report server with `Ctrl+C` in the terminal when finished.
 
 ## Common issues
 
