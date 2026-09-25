@@ -7,6 +7,17 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   // Store test files in the tests folder.
   testDir: './tests',
+  projects: [
+    { name: 'setup', testMatch: '**/*.setup.ts' },
+    { name: 'onboarding', testMatch: '**/onboarding/*.spec.ts' },
+    {
+      name: 'authenticated',
+      testMatch: '**/*.spec.ts',
+      testIgnore: '**/onboarding/**',
+      dependencies: ['setup'],
+      use: { storageState: 'playwright/.auth/user.json' },
+    },
+  ],
   // Run tests in one worker while learning so browser behavior is easier to follow.
   workers: 1,
   // Keep the browser open and visible by default for this learning project.
@@ -21,5 +32,5 @@ export default defineConfig({
     ...devices['Desktop Chrome'],
   },
   // Show the HTML report after the test run completes.
-  reporter: 'html',
+  reporter: [['html', { open: 'never' }]],
 });

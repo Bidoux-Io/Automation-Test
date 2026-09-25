@@ -67,8 +67,8 @@ test.describe('onboarding smoke flow', () => {
     });
   });
 
-  test('organization owner can invite an administrator', async () => {
-    const inviteEmail = 'nathan.robidoux@ionodes.com';
+  test('organization owner can invite and remove an administrator', async () => {
+    const inviteEmail = 'yukemmodiprou-5959@yopmail.com';
 
     await test.step('Open the organization users page', async () => {
       await cloudPage.getByRole('navigation').getByText('Settings', { exact: true }).click();
@@ -89,6 +89,19 @@ test.describe('onboarding smoke flow', () => {
       await expect(invitationDialog.getByText(inviteEmail, { exact: true })).toBeVisible();
       await invitationDialog.getByText('Close', { exact: true }).click();
       await expect(invitationDialog).toBeHidden();
+    });
+
+    await test.step('Remove the invited administrator', async () => {
+      const invitedUser = cloudPage.getByRole('row').filter({ hasText: inviteEmail });
+      await expect(invitedUser).toBeVisible();
+      await invitedUser.getByRole('link').click();
+      await expect(cloudPage).toHaveURL(/\/settings\/users\/[^/]+\/details/);
+      await cloudPage.getByRole('button', { name: 'Remove User' }).click();
+      const removalDialog = cloudPage.getByRole('dialog', { name: 'Remove User' });
+      await expect(removalDialog.getByText(inviteEmail, { exact: true })).toBeVisible();
+      await removalDialog.getByRole('button', { name: 'Remove', exact: true }).click();
+      await expect(cloudPage).toHaveURL(/\/settings\/users\/?$/);
+      await expect(cloudPage.getByRole('table').getByRole('row').filter({ hasText: inviteEmail })).toHaveCount(0);
     });
   });
 });
