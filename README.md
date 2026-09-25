@@ -4,7 +4,7 @@ This project contains Playwright smoke tests for the Percept Cloud QA environmen
 
 ## What the test does
 
-The onboarding flow verifies a new account, creates an organization, and checks that its Devices page opens.
+The onboarding flow verifies a new account, creates an organization, checks that its Devices page opens, and invites an administrator.
 
 ## Project structure
 
@@ -24,7 +24,7 @@ Automation Test/
 └── tsconfig.json
 ```
 
-- `tests/onboarding/create-account-and-organization.spec.ts` contains the two ordered smoke tests.
+- `tests/onboarding/create-account-and-organization.spec.ts` contains the three ordered smoke tests.
 - `pages/` contains the mailbox, registration, and organization actions.
 - `playwright.config.ts` contains browser, URL, reporting, and headed-mode settings.
 - `package.json` lists dependencies and commands.
@@ -58,12 +58,13 @@ $env:PERCEPT_BASE_URL = "https://qa.east-us.perceptcloud.net"
 
 ## Onboarding smoke flow
 
-The onboarding spec reports two separate, ordered tests:
+The onboarding spec reports three separate, ordered tests:
 
 1. Create a temporary mailbox through the public mail.tm API, register a new account, verify its email, and reach the empty Organization Picker.
 2. Use that verified account to submit a new organization and verify its Devices screen.
+3. Open Settings > Users, verify `nathan.robidoux@ionodes.com`, invite that user as an Administrator, and close the confirmation.
 
-Run the entire spec together: the second test depends on the browser session created by the first. If account creation fails, organization creation is skipped. Each run creates one real account and one real organization in QA. No mailbox account or API key is required, but QA must accept the public domain returned by mail.tm; the external service may also be unavailable or rate-limited. Run the onboarding flow with:
+Run the entire spec together: the later tests depend on the browser session created by the first. If account creation fails, the later tests are skipped. Each run creates one real account and one real organization in QA and sends an invitation to the specified user. No mailbox account or API key is required, but QA must accept the public domain returned by mail.tm; the external service may also be unavailable or rate-limited. Run the onboarding flow with:
 
 ```powershell
 npx playwright test tests/onboarding/create-account-and-organization.spec.ts

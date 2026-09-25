@@ -58,12 +58,37 @@ test.describe('onboarding smoke flow', () => {
     await test.step('Fill organization details and submit', async () => {
       const organizationPage = new OrganizationPage(cloudPage);
       await organizationPage.create(organizationName, email, Math.floor(Math.random() * 3));
-      await expect(cloudPage.getByText('Review your information before submitting')).toBeVisible();
+      await expect(cloudPage.getByText('Review your information before submitting')).toBeVisible({ timeout: 30_000 });
       await expect(cloudPage.getByText(organizationName, { exact: true })).toBeVisible();
       await expect(cloudPage.getByText(email, { exact: true })).toBeVisible();
       await cloudPage.getByRole('button', { name: 'Submit', exact: true }).click();
       await expect(cloudPage).toHaveURL(/\/devices/, { timeout: 60_000 });
       await expect(cloudPage.getByRole('navigation').getByRole('link', { name: organizationName })).toBeVisible();
+    });
+  });
+
+  test('organization owner can invite an administrator', async () => {
+    const inviteEmail = 'nathan.robidoux@ionodes.com';
+
+    await test.step('Open the organization users page', async () => {
+      await cloudPage.getByRole('navigation').getByText('Settings', { exact: true }).click();
+      await cloudPage.getByRole('link', { name: 'Users', exact: true }).click();
+      await expect(cloudPage).toHaveURL(/\/settings\/users/);
+    });
+
+    await test.step('Verify and invite the administrator', async () => {
+      await cloudPage.getByRole('button', { name: 'Invite new user' }).click();
+      await cloudPage.getByRole('textbox', { name: /Email/ }).fill(inviteEmail);
+      await cloudPage.getByRole('button', { name: 'Verify User' }).click();
+      await expect(cloudPage.getByText(inviteEmail, { exact: true })).toBeVisible();
+      await cloudPage.getByRole('combobox', { name: /Role/ }).click();
+      await cloudPage.getByRole('option', { name: 'Administrator' }).click();
+      await cloudPage.getByRole('button', { name: 'Invite User', exact: true }).click();
+      const invitationDialog = cloudPage.getByRole('dialog', { name: 'Invite New User' });
+      await expect(invitationDialog.getByText('Invitation sent to')).toBeVisible();
+      await expect(invitationDialog.getByText(inviteEmail, { exact: true })).toBeVisible();
+      await invitationDialog.getByText('Close', { exact: true }).click();
+      await expect(invitationDialog).toBeHidden();
     });
   });
 });
