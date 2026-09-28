@@ -14,5 +14,8 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     ...devices['Desktop Chrome'],
   },
-  reporter: process.argv.includes('--list') ? 'list' : [['html', { open: 'always' }]],
+  reporter: process.argv.includes('--list') ? 'list' : [
+    ['html', { open: 'always' }],
+    ...(process.argv.includes('--ui') ? [['./reporters/open-ui-report.ts'] as [string]] : []),
+  ],
 });
