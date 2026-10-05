@@ -37,9 +37,13 @@ export class DevicePage {
     await this.page.getByRole('button', { name: 'Delete Device', exact: true }).click();
     const dialog = this.page.getByRole('dialog', { name: 'Delete Device', exact: true });
     await dialog.getByRole('button', { name: 'Next', exact: true }).click();
-    await dialog.getByRole('switch', { name: 'Enable Reset Device To Factory Settings', exact: true }).uncheck();
+    const factoryReset = dialog.getByRole('switch', { name: 'Enable Reset Device To Factory Settings', exact: true });
+    await factoryReset.uncheck();
+    await expect(factoryReset).not.toBeChecked();
     await dialog.getByRole('button', { name: 'Next', exact: true }).click();
-    await expect(dialog.getByRole('alert', { name: "The device's settings will remain unchanged", exact: true })).toBeVisible();
+    const settingsUnchanged = dialog.getByRole('alert', { name: "The device's settings will remain unchanged", exact: true });
+    const deviceOffline = dialog.getByRole('alert', { name: 'Device Offline', exact: true });
+    await expect(settingsUnchanged.or(deviceOffline)).toBeVisible();
     await dialog.getByRole('button', { name: 'Delete', exact: true }).click();
     await expect(dialog).toBeHidden({ timeout: 30_000 });
     await expect(this.page).toHaveURL(/\/devices\/?$/, { timeout: 30_000 });

@@ -36,10 +36,11 @@ test('Run full smoke test', async ({ verifiedAccount, devices }) => {
   const deviceMac = process.env.PERCEPT_DEVICE_MAC?.trim() ?? '';
   const devicePin = process.env.PERCEPT_DEVICE_PIN?.trim() ?? '';
   if (deviceMac && devicePin) {
-    await test.step('Add and open a device', async () => {
+    await test.step('Add, open, and delete a device', async () => {
       const displayName = `Automation Device ${Date.now()}`;
       await test.step('Add a device from Devices Overview', () => devices.add(displayName, deviceMac, devicePin));
       await test.step('Open the added device page', () => devices.open(displayName));
+      await test.step('Delete the added device before continuing to Users', () => devices.removeIfPresent());
     });
   } else {
     test.info().annotations.push({

@@ -64,7 +64,7 @@ PERCEPT_DEVICE_PIN=your-device-pin
 
 Organization, device, and user tests sign in with an existing QA account. Configure `PERCEPT_USERNAME` and `PERCEPT_PASSWORD` in your local `.env`. User and device tests select `PERCEPT_ORGANIZATION_NAME`, defaulting to the configured AutomatedOrg organization; the organization-creation test starts at the picker instead.
 
-The independent device test uses the same `PERCEPT_DEVICE_MAC` and `PERCEPT_DEVICE_PIN` as the full smoke flow. It skips when those values are missing. Both tests delete their added device in fixture teardown, including after assertions fail or the test times out, with a separate 90-second cleanup budget. Cleanup verifies the exact device name and MAC, keeps factory reset disabled, and confirms the device is absent afterward so it can be reused. A cleanup failure fails the test; forcibly closing the browser or killing the runner can prevent cleanup. Do not run these tests concurrently against the same device. Organization-creation tests leave their uniquely named organizations in QA and record the owner credentials in the CSV.
+The independent device test uses the same `PERCEPT_DEVICE_MAC` and `PERCEPT_DEVICE_PIN` as the full smoke flow. It skips when those values are missing. The full smoke flow deletes its device immediately after opening it, before starting the user scenario. Both tests retain fixture teardown as cleanup, including after assertions fail or the test times out, with a separate 90-second cleanup budget. Cleanup verifies the exact device name and MAC, keeps factory reset disabled, and confirms the device is absent afterward so it can be reused. A cleanup failure fails the test; forcibly closing the browser or killing the runner can prevent cleanup. Do not run these tests concurrently against the same device. Organization-creation tests leave their uniquely named organizations in QA and record the owner credentials in the CSV.
 
 The QA URL is already configured. To use another environment for one terminal session, set:
 
@@ -78,7 +78,7 @@ The full smoke spec reports one test, `Run full smoke test`, containing these st
 
 1. Create a temporary mailbox through the public mail.tm API, register a new account, verify its email, and reach the empty Organization Picker.
 2. Use that verified account to submit a new organization and verify its Devices screen.
-3. If a device MAC and PIN are configured, add the device from Devices Overview, confirm success, close the dialog, and open the device page. Fixture teardown deletes it at the end of the run, even if a later step fails.
+3. If a device MAC and PIN are configured, add the device from Devices Overview, confirm success, close the dialog, open the device page, and delete the device before proceeding to Users. Fixture teardown remains a fallback if a step fails.
 4. Open Settings > Users, invite `yukemmodiprou-5959@yopmail.com` as an Administrator, then remove that user and confirm the Users list no longer contains them.
 
 Each full-flow run creates one real account and one real organization in QA, adds the configured device when available, then invites and removes the specified user. A failing step stops the remaining flow. No mailbox account or API key is required, but QA must accept the public domain returned by mail.tm; the external service may also be unavailable or rate-limited. Run the onboarding flow with:
