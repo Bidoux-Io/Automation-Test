@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "playwright test --project=onboarding",
-    "test:ui": "playwright test --ui",
-    "test:headed": "playwright test --headed --project=onboarding",
-    "test:debug": "playwright test --debug --project=onboarding",
-    "test:onboarding": "playwright test --project=onboarding",
-    "test:ui:onboarding": "playwright test --ui --project=onboarding",
+    "test": "playwright test --project=\"Full Smoke Test\"",
+    "test:ui": "playwright test --ui --project=\"Full Smoke Test\" --project=\"Individual Tests\"",
+    "test:headed": "playwright test --headed --project=\"Full Smoke Test\"",
+    "test:debug": "playwright test --debug --project=\"Full Smoke Test\"",
+    "test:onboarding": "playwright test --project=\"Full Smoke Test\"",
+    "test:ui:onboarding": "playwright test --ui --project=\"Full Smoke Test\"",
     "report": "playwright show-report"
   },
   "devDependencies": {

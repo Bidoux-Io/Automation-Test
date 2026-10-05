@@ -15,8 +15,11 @@ Automation Test/
 │   ├── registration.page.ts
 │   └── organization.page.ts
 ├── tests/
+│   ├── Full Smoke Test.spec.ts
+│   ├── Individual Tests.spec.ts
+│   ├── fixtures/
 │   └── onboarding/
-│       └── create-account-and-organization.spec.ts
+│       └── account-register.ts
 ├── .gitignore
 ├── package.json
 ├── playwright.config.ts
@@ -24,7 +27,9 @@ Automation Test/
 └── tsconfig.json
 ```
 
-- `tests/onboarding/create-account-and-organization.spec.ts` contains the four ordered smoke tests.
+- `tests/Full Smoke Test.spec.ts` contains one full smoke test with named steps.
+- `tests/Individual Tests.spec.ts` contains four independently runnable scenarios.
+- `tests/fixtures/` shares registration, login, and organization selection between tests.
 - `pages/` contains the mailbox, registration, and organization actions.
 - `playwright.config.ts` contains browser, URL, reporting, and headed-mode settings.
 - `package.json` lists dependencies and commands.
@@ -50,12 +55,16 @@ The onboarding flow needs no existing account credentials. It uses a temporary m
 $env:PERCEPT_REGISTRATION_PASSWORD = "your-test-password"
 ```
 
-To include device addition, configure a reusable QA device MAC address and PIN in your local `.env` (or terminal environment). Keep the PIN out of source control. The device test skips itself when either value is missing:
+To include device addition in the full flow, configure an available QA device MAC address and PIN in your local `.env` (or terminal environment). Keep the PIN out of source control. The full flow omits only the device step when either value is missing:
 
 ```dotenv
 PERCEPT_DEVICE_MAC=your-device-mac
 PERCEPT_DEVICE_PIN=your-device-pin
 ```
+
+Organization, device, and user tests sign in with an existing QA account. Configure `PERCEPT_USERNAME` and `PERCEPT_PASSWORD` in your local `.env`. User and device tests select `PERCEPT_ORGANIZATION_NAME`, defaulting to the configured AutomatedOrg organization; the organization-creation test starts at the picker instead.
+
+The independent device test uses the same `PERCEPT_DEVICE_MAC` and `PERCEPT_DEVICE_PIN` as the full smoke flow. It skips when those values are missing. Both tests delete their added device in fixture teardown, including after assertions fail or the test times out, with a separate 90-second cleanup budget. Cleanup verifies the exact device name and MAC, keeps factory reset disabled, and confirms the device is absent afterward so it can be reused. A cleanup failure fails the test; forcibly closing the browser or killing the runner can prevent cleanup. Do not run these tests concurrently against the same device. Organization-creation tests leave their uniquely named organizations in QA and record the owner credentials in the CSV.
 
 The QA URL is already configured. To use another environment for one terminal session, set:
 
@@ -65,14 +74,14 @@ $env:PERCEPT_BASE_URL = "https://qa.east-us.perceptcloud.net"
 
 ## Onboarding smoke flow
 
-The onboarding spec reports three separate, ordered tests:
+The full smoke spec reports one test, `Run full smoke test`, containing these steps:
 
 1. Create a temporary mailbox through the public mail.tm API, register a new account, verify its email, and reach the empty Organization Picker.
 2. Use that verified account to submit a new organization and verify its Devices screen.
-3. If a device MAC and PIN are configured, add the device from Devices Overview, confirm success, close the dialog, and open the device page.
+3. If a device MAC and PIN are configured, add the device from Devices Overview, confirm success, close the dialog, and open the device page. Fixture teardown deletes it at the end of the run, even if a later step fails.
 4. Open Settings > Users, invite `yukemmodiprou-5959@yopmail.com` as an Administrator, then remove that user and confirm the Users list no longer contains them.
 
-Run the entire spec together: the later tests depend on the browser session created by the first. If account creation fails, the later tests are skipped. Each run creates one real account and one real organization in QA, adds the configured device when available, then invites and removes the specified user. No mailbox account or API key is required, but QA must accept the public domain returned by mail.tm; the external service may also be unavailable or rate-limited. Run the onboarding flow with:
+Each full-flow run creates one real account and one real organization in QA, adds the configured device when available, then invites and removes the specified user. A failing step stops the remaining flow. No mailbox account or API key is required, but QA must accept the public domain returned by mail.tm; the external service may also be unavailable or rate-limited. Run the onboarding flow with:
 
 ```powershell
 npm run test:onboarding
@@ -93,6 +102,27 @@ To open the visual test runner in VS Code:
 3. Select `Run Onboarding Tests and Open Report` to run the full flow, or `Open Playwright Test UI` to select individual tests. Both open an HTML report when a run finishes.
 
 The task loads the local `.env` file automatically.
+
+### Full And Individual Tests In The UI
+
+`Open-Test-UI.cmd` and `npm run test:ui` open two top-level files: `Full Smoke Test.spec.ts` first, then `Individual Tests.spec.ts`. Expand a file to select a test directly; there are no scenario folders or extra describe groups. If an old project filter hides tests, clear it or select both `Full Smoke Test` and `Individual Tests`.
+
+| Project | Selectable Tests |
+| --- | --- |
+| `Full Smoke Test` | Run full smoke test |
+| `Individual Tests` | Create and verify an account; create an organization; add, open, and delete a device; invite and remove an administrator |
+
+Click the run arrow beside `Run full smoke test` for the complete flow, or beside an individual test for just that scenario. Running all tests runs both modes and creates extra accounts and organizations.
+
+Individual account tests create and verify a new account but do not create an organization. The other individual tests use the reusable QA account and do not run onboarding. Each user test prepares and cleans up its own invitation, refusing to change an invitee who already belongs to the organization. Override the invitee with `PERCEPT_INVITE_EMAIL` when needed.
+
+UI and CLI individual tests log in automatically as needed without a separate authentication setup test. The Users helper waits for refresh to finish and member rows to load before interacting, rather than relying on fixed delays.
+
+To open only the full flow, use `npm run test:ui:onboarding`. To run an individual test from the terminal, use its file and project, for example:
+
+```powershell
+npx playwright test "tests/Individual Tests.spec.ts" --project="Individual Tests" --grep="Invite and remove an administrator"
+```
 
 Run the onboarding tests in headed mode:
 
@@ -121,13 +151,13 @@ The CLI report opens automatically after passed or failed runs. Close the report
 
 Open `smoke-accounts.csv` in the project folder with Excel or VS Code to find accounts created by the smoke flow. The file is created when an account is first registered and keeps its history across runs.
 
-Each row records the creation date (UTC), environment URL, account email, registration password, organization name, and progress status. A row is appended after registration, email verification, and successful organization creation; the latest row for an email shows its last confirmed status. Earlier rows remain available if a later step fails. Retries create separate accounts and records.
+Each row records the run start date (UTC), environment URL, account email, registration password, organization name, and progress status. A row is appended after registration, email verification, and successful organization creation; the latest row for an email shows its last confirmed status. Earlier rows remain available if a later step fails. Retries of new-account tests create separate accounts and records. The standalone organization test records the existing owner's credentials and the new organization.
 
 The corresponding Playwright tests also include these details under Attachments in the HTML report. The saved password is the exact password used for that run, including any `PERCEPT_REGISTRATION_PASSWORD` override. Passwords are stored in plaintext in both the CSV and report attachments; keep these files private and do not publish reports containing them. The CSV and generated reports are excluded from Git.
 
 ## Common issues
 
-- Run the whole onboarding spec together; the organization test uses the verified account from the first test.
+- If individual tests are missing from the UI, clear the project filter or reopen the UI with `Open-Test-UI.cmd`.
 - mail.tm can rate-limit requests or change its available domains; the test does not bypass CAPTCHA.
 - The QA environment must accept the chosen temporary email domain.
 - Install Chromium with `npx playwright install chromium` on a new machine.

@@ -4,7 +4,13 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests',
   projects: [
-    { name: 'onboarding', testMatch: '**/onboarding/*.spec.ts' },
+    { name: 'Full Smoke Test', testMatch: '**/Full Smoke Test.spec.ts', timeout: 240_000 },
+    {
+      name: 'Individual Tests',
+      testMatch: '**/Individual Tests.spec.ts',
+      timeout: 120_000,
+      metadata: { organizationName: '\u2699\uFE0F AutomatedOrg' },
+    },
   ],
   workers: 1,
   use: {

@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 export class OrganizationPage {
   constructor(private readonly page: Page) {}
@@ -8,7 +8,9 @@ export class OrganizationPage {
     email: string,
     residencyIndex = 0,
   ): Promise<void> {
-    await this.page.getByText('Create New Organization', { exact: true }).click();
+    await this.page.getByRole('link', { name: 'Create New Organization', exact: true }).click();
+    await expect(this.page).toHaveURL(/\/new-organization\/?$/, { timeout: 30_000 });
+    await expect(this.page.getByLabel('Organization Name')).toBeVisible({ timeout: 30_000 });
     await this.page.getByLabel('Organization Name').fill(organizationName);
 
     await this.page.getByPlaceholder('Search Address...').fill('12345 Rue Jeanne-Mance Montreal, H3L 3C8, Quebec, CA');
@@ -26,8 +28,9 @@ export class OrganizationPage {
   }
 
   async select(organizationName: string): Promise<void> {
+    const escapedName = organizationName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     await this.page.getByRole('link', {
-      name: new RegExp(`^Select .*${organizationName}$`),
+      name: new RegExp(`^Select .*${escapedName}$`),
     }).click();
   }
 }
