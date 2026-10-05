@@ -2,12 +2,13 @@ import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import { MailTmInbox } from '../../pages/mailtm.inbox';
 import { OrganizationPage } from '../../pages/organization.page';
 import { RegistrationPage } from '../../pages/registration.page';
+import { recordSmokeAccount, type SmokeAccountRecord } from './account-register';
 
 const registrationPassword = process.env.PERCEPT_REGISTRATION_PASSWORD ?? 'Cloud1234!';
 
 test.setTimeout(240_000);
 
-async function registerVerifiedAccount(page: Page): Promise<{ email: string; cloudPage: Page }> {
+async function registerVerifiedAccount(page: Page, record: SmokeAccountRecord): Promise<{ email: string; cloudPage: Page }> {
   let email = '';
 
   const inbox = new MailTmInbox(page);
@@ -19,10 +20,15 @@ async function registerVerifiedAccount(page: Page): Promise<{ email: string; clo
   await test.step('Register a new account', async () => {
     await registrationPage.open(email);
     await registrationPage.register(email, registrationPassword);
+    record.email = email;
+    await recordSmokeAccount(record, test.info());
   });
 
   const cloudPage = await test.step('Confirm the account through the test inbox', async () => {
-    return await inbox.confirmAccount();
+    const confirmedPage = await inbox.confirmAccount();
+    record.status = 'email verified';
+    await recordSmokeAccount(record, test.info());
+    return confirmedPage;
   });
 
   return { email, cloudPage };
@@ -35,6 +41,7 @@ test.describe('onboarding smoke flow', () => {
   let page: Page;
   let cloudPage: Page;
   let email: string;
+  let accountRecord: SmokeAccountRecord;
 
   test.beforeAll(async ({ browser, baseURL }) => {
     context = await browser.newContext({ baseURL });
@@ -45,8 +52,16 @@ test.describe('onboarding smoke flow', () => {
     await context?.close();
   });
 
-  test('new user can create and verify an account', async () => {
-    ({ email, cloudPage } = await registerVerifiedAccount(page));
+  test('new user can create and verify an account', async ({ baseURL }) => {
+    accountRecord = {
+      createdAt: new Date().toISOString(),
+      environment: baseURL ?? '',
+      email: '',
+      password: registrationPassword,
+      organization: '',
+      status: 'account registered',
+    };
+    ({ email, cloudPage } = await registerVerifiedAccount(page, accountRecord));
     await test.step('Confirm the verified account has no organizations', async () => {
       await expect(cloudPage.getByRole('heading', { name: 'Organization Picker' })).toBeVisible();
       await expect(cloudPage.getByText('No Organizations')).toBeVisible();
@@ -68,7 +83,40 @@ test.describe('onboarding smoke flow', () => {
     await test.step('Submit organization and open Devices', async () => {
       await cloudPage.getByRole('button', { name: 'Submit', exact: true }).click();
       await expect(cloudPage).toHaveURL(/\/devices/, { timeout: 60_000 });
+      accountRecord.organization = organizationName;
+      accountRecord.status = 'organization created';
+      await recordSmokeAccount(accountRecord, test.info());
       await expect(cloudPage.getByRole('navigation').getByRole('link', { name: organizationName })).toBeVisible();
+    });
+  });
+
+  test('organization owner can add and open a device', async () => {
+    const deviceMac = process.env.PERCEPT_DEVICE_MAC?.trim() ?? '';
+    const devicePin = process.env.PERCEPT_DEVICE_PIN?.trim() ?? '';
+    test.skip(!deviceMac || !devicePin, 'Set PERCEPT_DEVICE_MAC and PERCEPT_DEVICE_PIN to add a QA device.');
+    const displayName = `Automation Device ${Date.now()}`;
+
+    await test.step('Add a device from Devices Overview', async () => {
+      await cloudPage.getByRole('button', { name: 'Add', exact: true }).click();
+      const dialog = cloudPage.getByRole('dialog', { name: 'Add Devices' });
+      await dialog.getByLabel('Display Name').fill(displayName);
+      await dialog.getByLabel('Mac Address').fill(deviceMac);
+      await dialog.getByLabel('Device PIN').fill(devicePin);
+      await dialog.getByRole('button', { name: 'Add', exact: true }).click();
+      const addDevices = dialog.getByRole('button', { name: 'Add 1 device' });
+      await expect(addDevices).toBeEnabled();
+      await addDevices.click();
+      await expect(dialog.getByText('The following devices were successfully added:')).toBeVisible({ timeout: 60_000 });
+      await expect(dialog.getByText(deviceMac, { exact: true })).toBeVisible();
+      await dialog.getByRole('button', { name: 'Close' }).click();
+      await expect(dialog).toBeHidden();
+    });
+
+    await test.step('Open the added device page', async () => {
+      const deviceLink = cloudPage.getByRole('table').getByRole('link', { name: displayName });
+      await expect(deviceLink).toBeVisible({ timeout: 60_000 });
+      await deviceLink.click();
+      await expect(cloudPage).toHaveURL(/\/devices\/[^/]+(?:\/.*)?$/, { timeout: 30_000 });
     });
   });
 

@@ -4,7 +4,7 @@ This project contains Playwright smoke tests for the Percept Cloud QA environmen
 
 ## What the test does
 
-The onboarding flow verifies a new account, creates an organization, checks that its Devices page opens, then invites and removes an administrator.
+The onboarding flow verifies a new account, creates an organization, optionally adds a QA device, then invites and removes an administrator.
 
 ## Project structure
 
@@ -24,7 +24,7 @@ Automation Test/
 └── tsconfig.json
 ```
 
-- `tests/onboarding/create-account-and-organization.spec.ts` contains the three ordered smoke tests.
+- `tests/onboarding/create-account-and-organization.spec.ts` contains the four ordered smoke tests.
 - `pages/` contains the mailbox, registration, and organization actions.
 - `playwright.config.ts` contains browser, URL, reporting, and headed-mode settings.
 - `package.json` lists dependencies and commands.
@@ -50,6 +50,13 @@ The onboarding flow needs no existing account credentials. It uses a temporary m
 $env:PERCEPT_REGISTRATION_PASSWORD = "your-test-password"
 ```
 
+To include device addition, configure a reusable QA device MAC address and PIN in your local `.env` (or terminal environment). Keep the PIN out of source control. The device test skips itself when either value is missing:
+
+```dotenv
+PERCEPT_DEVICE_MAC=your-device-mac
+PERCEPT_DEVICE_PIN=your-device-pin
+```
+
 The QA URL is already configured. To use another environment for one terminal session, set:
 
 ```powershell
@@ -62,9 +69,10 @@ The onboarding spec reports three separate, ordered tests:
 
 1. Create a temporary mailbox through the public mail.tm API, register a new account, verify its email, and reach the empty Organization Picker.
 2. Use that verified account to submit a new organization and verify its Devices screen.
-3. Open Settings > Users, invite `yukemmodiprou-5959@yopmail.com` as an Administrator, then remove that user and confirm the Users list no longer contains them.
+3. If a device MAC and PIN are configured, add the device from Devices Overview, confirm success, close the dialog, and open the device page.
+4. Open Settings > Users, invite `yukemmodiprou-5959@yopmail.com` as an Administrator, then remove that user and confirm the Users list no longer contains them.
 
-Run the entire spec together: the later tests depend on the browser session created by the first. If account creation fails, the later tests are skipped. Each run creates one real account and one real organization in QA, then invites and removes the specified user. No mailbox account or API key is required, but QA must accept the public domain returned by mail.tm; the external service may also be unavailable or rate-limited. Run the onboarding flow with:
+Run the entire spec together: the later tests depend on the browser session created by the first. If account creation fails, the later tests are skipped. Each run creates one real account and one real organization in QA, adds the configured device when available, then invites and removes the specified user. No mailbox account or API key is required, but QA must accept the public domain returned by mail.tm; the external service may also be unavailable or rate-limited. Run the onboarding flow with:
 
 ```powershell
 npm run test:onboarding
@@ -108,6 +116,14 @@ npm run report
 ```
 
 The CLI report opens automatically after passed or failed runs. Close the report server with `Ctrl+C` in the terminal when finished.
+
+## Created Accounts
+
+Open `smoke-accounts.csv` in the project folder with Excel or VS Code to find accounts created by the smoke flow. The file is created when an account is first registered and keeps its history across runs.
+
+Each row records the creation date (UTC), environment URL, account email, registration password, organization name, and progress status. A row is appended after registration, email verification, and successful organization creation; the latest row for an email shows its last confirmed status. Earlier rows remain available if a later step fails. Retries create separate accounts and records.
+
+The corresponding Playwright tests also include these details under Attachments in the HTML report. The saved password is the exact password used for that run, including any `PERCEPT_REGISTRATION_PASSWORD` override. Passwords are stored in plaintext in both the CSV and report attachments; keep these files private and do not publish reports containing them. The CSV and generated reports are excluded from Git.
 
 ## Common issues
 

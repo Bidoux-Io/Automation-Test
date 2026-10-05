@@ -16,5 +16,8 @@
     "@types/node": "latest",
     "dotenv": "^18.0.3",
     "typescript": "latest"
+  },
+  "dependencies": {
+    "csv-stringify": "^6.9.0"
   }
 }
