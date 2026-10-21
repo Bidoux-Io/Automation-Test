@@ -22,7 +22,9 @@ export class OrganizationPage {
 
     const residency = this.page.getByRole('combobox', { name: 'Data residency region' });
     await residency.click();
-    await this.page.getByText(['United States', 'Canada', 'European Union'][residencyIndex % 3], { exact: true }).click();
+    const residencyOptions = this.page.getByRole('listbox').getByRole('option');
+    await expect(residencyOptions).toHaveCount(3);
+    await residencyOptions.nth(residencyIndex % 3).click();
 
     await this.page.getByRole('button', { name: 'Next', exact: true }).click();
   }
