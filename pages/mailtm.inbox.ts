@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import type { Page, APIResponse } from '@playwright/test';
 
-const provider = process.env.MAILBOX_PROVIDER ?? (process.env.MAILTM_API_URL ? 'mail.tm' : 'tempmail.lol');
+const provider = process.env.MAILBOX_PROVIDER ?? 'mail.tm';
 const apiUrl = (provider === 'mail.tm'
   ? process.env.MAILTM_API_URL ?? 'https://api.mail.tm'
   : 'https://api.tempmail.lol/v2').replace(/\/$/, '');

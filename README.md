@@ -49,13 +49,13 @@ npx playwright install chromium
 
 ## Configure the environment
 
-The onboarding flow needs no existing account credentials. It uses a token-protected temporary tempmail.lol mailbox and the registration password from `PERCEPT_REGISTRATION_PASSWORD` (or the test default). Set a password in your local `.env` if needed; do not commit it:
+The onboarding flow needs no existing account credentials. It uses a token-protected temporary mail.tm mailbox and the registration password from `PERCEPT_REGISTRATION_PASSWORD` (or the test default). Set a password in your local `.env` if needed; do not commit it:
 
 ```powershell
 $env:PERCEPT_REGISTRATION_PASSWORD = "your-test-password"
 ```
 
-Mailbox requests retry transient network and gateway failures up to three times. To explicitly use the older provider, set `MAILBOX_PROVIDER=mail.tm` in your local `.env`; `MAILTM_API_URL` can override its compatible API endpoint. The default is `MAILBOX_PROVIDER=tempmail.lol`. The provider is selected before registration and stays the same while waiting for the verification email.
+Mailbox requests retry transient network and gateway failures up to three times. The default is `MAILBOX_PROVIDER=mail.tm`; `MAILTM_API_URL` can override its compatible API endpoint. To use the alternate provider, set `MAILBOX_PROVIDER=tempmail.lol` in your local `.env`. The provider is selected before registration and stays the same while waiting for the verification email.
 
 To include device addition in the full flow, configure an available QA device MAC address and PIN in your local `.env` (or terminal environment). Keep the PIN out of source control. The full flow omits only the device step when either value is missing:
 
@@ -78,7 +78,7 @@ $env:PERCEPT_BASE_URL = "https://qa.east-us.perceptcloud.net"
 
 The full smoke spec reports one test, `Run full smoke test`, containing these steps:
 
-1. Create a temporary mailbox through the public tempmail.lol API, register a new account, verify its email, and reach the empty Organization Picker.
+1. Create a temporary mailbox through the public mail.tm API, register a new account, verify its email, and reach the empty Organization Picker.
 2. Use that verified account to submit a new organization and verify its Devices screen.
 3. If a device MAC and PIN are configured, add the device from Devices Overview, confirm success, close the dialog, open the device page, and delete the device before proceeding to Users. Fixture teardown remains a fallback if a step fails.
 4. Open Settings > Users, invite `yukemmodiprou-5959@yopmail.com` as an Administrator, then remove that user and confirm the Users list no longer contains them.
@@ -160,7 +160,7 @@ The corresponding Playwright tests also include these details under Attachments 
 ## Common issues
 
 - If individual tests are missing from the UI, clear the project filter or reopen the UI with `Open-Test-UI.cmd`.
-- Temporary-mail providers can rate-limit requests or change their available domains; the test does not bypass CAPTCHA. The default provider is tempmail.lol; mail.tm remains available as an explicit option.
+- Temporary-mail providers can rate-limit requests or change their available domains; the test does not bypass CAPTCHA. The default provider is mail.tm; tempmail.lol remains available as an explicit option.
 - The QA environment must accept the chosen temporary email domain.
 - Install Chromium with `npx playwright install chromium` on a new machine.
 
